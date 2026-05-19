@@ -225,8 +225,8 @@ body::after {
   top:0; left:0;
   width:50%; height:100%;
   overflow:hidden;
-  z-index:1;
-  background:var(--paper2);
+  z-index:6;
+  background:transparent;
 }
 .left-display img {
   position:absolute; inset:0;
@@ -359,12 +359,20 @@ body::after {
 ============================================================= */
 
 const FULL_SET  = new Set([1,2,15,16,17]);
-const N         = 17;
+const N         = 18;
 
 // Image paths
 function imgPath(pg, part) {
+
+  // blank inside-cover page
+  if (pg === 0) return 'images/blank.jpg';
+
   const p = String(pg).padStart(2,'0');
-  if (FULL_SET.has(pg)) return `images/p${p}-full.jpg`;
+
+  if (FULL_SET.has(pg)) {
+    return `images/p${p}-full.jpg`;
+  }
+
   return `images/p${p}-${part}.jpg`;
 }
 
