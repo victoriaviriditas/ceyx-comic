@@ -3,60 +3,327 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Ceyx</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<title>Ceyx · Seys · Ceix</title>
 <style>
-:root{--paper:#f0e8d5;--spine:#c8b89a;--bg:#111009;--book-w:520px;--book-h:735px;}
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-html,body{height:100%;overflow:hidden;background:var(--bg);font-family:'JetBrains Mono',monospace;touch-action:none;-webkit-user-select:none;user-select:none;}
-body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:200;opacity:0.16;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.1 0 0 0 0 0.08 0 0 0 0 0.05 0 0 0 0.5 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");}
-.masthead{position:fixed;top:0;left:0;right:0;padding:16px 24px;display:flex;justify-content:space-between;align-items:baseline;z-index:50;pointer-events:none;}
-.masthead .title{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:26px;font-weight:400;letter-spacing:0.06em;color:rgba(240,232,213,0.9);}
-.masthead .meta{font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:rgba(240,232,213,0.35);}
-.stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden;}
-.zoom-wrap{transform-origin:center center;transition:transform 0.38s cubic-bezier(0.2,0.8,0.2,1);will-change:transform;}
-.zoom-wrap.instant{transition:none;}
-.book{width:var(--book-w);height:var(--book-h);position:relative;perspective:3000px;filter:drop-shadow(0 2px 1px rgba(0,0,0,0.4)) drop-shadow(0 20px 40px rgba(0,0,0,0.65)) drop-shadow(0 60px 80px rgba(0,0,0,0.4));}
-.book-spine{position:absolute;top:6px;bottom:6px;right:-5px;width:8px;background:repeating-linear-gradient(to bottom,var(--spine) 0,var(--spine) 1px,var(--paper) 1px,var(--paper) 4px);border-radius:0 2px 2px 0;z-index:0;}
-.page-full,.strip{position:absolute;inset:0;transform-origin:left center;transform-style:preserve-3d;transition:transform 0.72s cubic-bezier(0.35,0.05,0.2,1);will-change:transform;cursor:grab;z-index:1;}
-.strip{inset:auto;left:0;right:0;}
-.page-full.dragging,.strip.dragging{transition:none;cursor:grabbing;}
-.page-full.lifted,.strip.lifted{filter:drop-shadow(0 12px 20px rgba(0,0,0,0.3));}
-.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:var(--paper);overflow:hidden;}
-.face.back{transform:rotateY(180deg);}
-.face img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top center;display:block;}
-.face::before{content:"";position:absolute;top:0;bottom:0;left:0;width:28px;background:linear-gradient(to right,rgba(0,0,0,0.28),transparent);z-index:5;pointer-events:none;}
-.face.back::before{left:auto;right:0;background:linear-gradient(to left,rgba(0,0,0,0.28),transparent);}
-.page-shade{position:absolute;inset:0;z-index:6;pointer-events:none;opacity:0;background:linear-gradient(to right,rgba(0,0,0,0.32),rgba(0,0,0,0.06) 55%,transparent);}
-.cut-line{position:absolute;left:3%;right:0;height:1px;background:linear-gradient(to right,transparent,rgba(28,24,20,0.14) 8%,rgba(28,24,20,0.14) 92%,transparent);z-index:10;pointer-events:none;}
-.controls{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:100;display:flex;gap:6px;align-items:center;background:rgba(17,16,9,0.82);backdrop-filter:blur(12px);padding:8px 12px;border-radius:100px;border:0.5px solid rgba(240,232,213,0.12);}
-.controls button{background:rgba(240,232,213,0.07);color:rgba(240,232,213,0.8);border:0.5px solid rgba(240,232,213,0.16);padding:7px 11px;border-radius:100px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.08em;cursor:pointer;transition:background 0.15s;white-space:nowrap;}
-.controls button:hover{background:rgba(240,232,213,0.14);border-color:rgba(240,232,213,0.3);}
-.controls button:active{transform:scale(0.96);}
-.controls .readout{font-size:11px;letter-spacing:0.1em;color:rgba(240,232,213,0.4);padding:0 8px;}
-.controls .sep{width:0.5px;height:18px;background:rgba(240,232,213,0.14);}
-.page-counter{position:fixed;bottom:20px;right:24px;z-index:100;font-size:10px;letter-spacing:0.2em;color:rgba(240,232,213,0.3);text-transform:uppercase;}
-.hint{position:fixed;bottom:72px;left:50%;transform:translateX(-50%);z-index:50;font-size:9px;letter-spacing:0.22em;text-transform:uppercase;color:rgba(240,232,213,0.3);pointer-events:none;animation:hintFade 8s ease forwards 1.5s;white-space:nowrap;}
-@keyframes hintFade{to{opacity:0;}}
-@media(max-width:600px){:root{--book-w:88vw;--book-h:calc(88vw * 1.414);}.masthead .meta{display:none;}}
+:root {
+  --paper:   #f0e8d5;
+  --paper2:  #e8dfc8;
+  --spine:   #c8b89a;
+  --bg:      #111009;
+  --ui-font: 'ainslie-sans', 'Helvetica Neue', Arial, sans-serif;
+  --ui-color: #424242;
+  /* Book is TWO pages wide — left (read) + right (unread) */
+  --page-w:  360px;
+  --page-h:  509px; /* page-w * (684/432) actual PDF ratio */
+  --book-w:  720px; /* 2 × page-w */
+  --book-h:  509px;
+}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+html, body {
+  height:100%; overflow:hidden;
+  background:var(--bg);
+  font-family: var(--ui-font);
+  font-weight: 400;
+  line-height: 1.5;
+  touch-action:none;
+  -webkit-user-select:none; user-select:none;
+}
+body::after {
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:200;
+  opacity:0.14;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.1 0 0 0 0 0.08 0 0 0 0 0.05 0 0 0 0.5 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+.masthead {
+  position:fixed; top:0; left:0; right:0;
+  padding:14px 22px;
+  display:flex; justify-content:space-between; align-items:baseline;
+  z-index:50; pointer-events:none;
+}
+.masthead .title {
+  font-family: var(--ui-font);
+  font-size: 18px; font-weight: 400; letter-spacing: 0.08em;
+  text-transform: uppercase; color: rgba(240,232,213,0.9);
+}
+.masthead .meta {
+  font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase;
+  color: rgba(240,232,213,0.32);
+}
+
+/* ── STAGE ── */
+.stage {
+  position:fixed; inset:0;
+  display:flex; align-items:center; justify-content:center;
+  overflow:hidden;
+}
+.zoom-wrap {
+  transform-origin:center center;
+  transition:transform 0.38s cubic-bezier(0.2,0.8,0.2,1);
+  will-change:transform;
+}
+.zoom-wrap.instant { transition:none; }
+
+/* ── BOOK FRAME ──
+   Left half = verso (already-read pages pile up here)
+   Right half = recto (unread pages stack here, flip leftward)
+*/
+.book {
+  width:var(--book-w);
+  height:var(--book-h);
+  position:relative;
+  perspective:2800px;
+  filter:
+    drop-shadow(0 2px 2px rgba(0,0,0,0.5))
+    drop-shadow(0 18px 36px rgba(0,0,0,0.6))
+    drop-shadow(0 50px 70px rgba(0,0,0,0.35));
+}
+
+/* Background paper — both halves visible always */
+.book-bg {
+  position:absolute; inset:0;
+  display:flex;
+}
+.book-bg-left, .book-bg-right {
+  flex:1; height:100%;
+  background:var(--paper2);
+}
+.book-bg-left {
+  border-radius:4px 0 0 4px;
+  box-shadow:inset -2px 0 6px rgba(0,0,0,0.12);
+}
+.book-bg-right {
+  border-radius:0 4px 4px 0;
+  box-shadow:inset 2px 0 6px rgba(0,0,0,0.12);
+}
+
+/* Centre spine line */
+.spine-line {
+  position:absolute; top:0; bottom:0;
+  left:50%; width:2px; margin-left:-1px;
+  background:linear-gradient(to bottom,
+    rgba(0,0,0,0.0), rgba(0,0,0,0.22) 20%, rgba(0,0,0,0.22) 80%, rgba(0,0,0,0.0));
+  z-index:5; pointer-events:none;
+}
+/* Page-stack edge on right */
+.stack-edge {
+  position:absolute; top:4px; bottom:4px; right:-4px; width:6px;
+  background:repeating-linear-gradient(
+    to bottom,var(--spine) 0,var(--spine) 1px,var(--paper) 1px,var(--paper) 4px
+  );
+  border-radius:0 2px 2px 0; z-index:0;
+}
+
+/* ── PAGE ELEMENT ──
+   Each page lives on the RIGHT half (recto).
+   transform-origin is the LEFT edge of the right half = centre of book.
+   When rotated -180° it lands on the left half (verso), showing its back face.
+*/
+.page {
+  position:absolute;
+  top:0;
+  left:50%;            /* starts at book centre */
+  width:50%;           /* covers right half */
+  height:100%;
+  transform-origin:left center;
+  transform-style:preserve-3d;
+  transition:transform 0.75s cubic-bezier(0.35,0.05,0.2,1);
+  will-change:transform;
+  cursor:grab;
+  /* Pages stack: first page on top, successive pages behind */
+}
+.page.dragging { transition:none; cursor:grabbing; }
+.page.lifted   { filter:drop-shadow(0 10px 20px rgba(0,0,0,0.3)); }
+
+/* Front face = recto (right side, unread) */
+.face {
+  position:absolute; inset:0;
+  backface-visibility:hidden; -webkit-backface-visibility:hidden;
+  background:var(--paper);
+  overflow:hidden;
+}
+.face.back {
+  transform:rotateY(180deg);
+  background:var(--paper2);
+}
+.face img {
+  position:absolute; inset:0;
+  width:100%; height:100%;
+  object-fit:fill;   /* fill exactly — no letterboxing */
+  display:block;
+  -webkit-user-drag:none; /* PREVENT browser image drag */
+  user-drag:none;
+  pointer-events:none;
+}
+/* Gutter shadows */
+.face::after {
+  content:""; position:absolute; inset:0; z-index:4; pointer-events:none;
+}
+.face.front::after {
+  background:linear-gradient(to right, rgba(0,0,0,0.22) 0%, transparent 18%);
+}
+.face.back::after {
+  background:linear-gradient(to left, rgba(0,0,0,0.22) 0%, transparent 18%);
+}
+/* Turn shading */
+.page-shade {
+  position:absolute; inset:0; z-index:5; pointer-events:none; opacity:0;
+  background:linear-gradient(to right,rgba(0,0,0,0.35),rgba(0,0,0,0.05) 60%,transparent);
+}
+
+/* ── SPLIT PAGE STRIPS ──
+   A split page is 3 .strip elements, each absolutely positioned
+   within the RIGHT half of the book, with unequal heights
+   matching the red-line proportions:
+     top: 35.95%
+     mid: 27.10%
+     bot: 36.95%
+*/
+.strip {
+  position:absolute;
+  left:50%;
+  width:50%;
+  transform-origin:left center;
+  transform-style:preserve-3d;
+  transition:transform 0.75s cubic-bezier(0.35,0.05,0.2,1);
+  will-change:transform;
+  cursor:grab;
+}
+.strip.dragging { transition:none; cursor:grabbing; }
+.strip.lifted   { filter:drop-shadow(0 8px 16px rgba(0,0,0,0.3)); }
+
+/* Strip positions — unequal, matching red lines */
+.strip.s-top { top:0;       height:35.95%; }
+.strip.s-mid { top:35.95%;  height:27.10%; }
+.strip.s-bot { top:63.05%;  height:36.95%; }
+
+/* Cut lines between strips */
+.cut-line {
+  position:absolute; left:50%; right:0; height:1px;
+  background:linear-gradient(to right,
+    rgba(28,24,20,0.18) 0%, rgba(28,24,20,0.18) 92%, transparent);
+  z-index:8; pointer-events:none;
+}
+.cut-line.cl-mid { top:35.95%; }
+.cut-line.cl-bot { top:63.05%; }
+
+/* ── LEFT SIDE PAGE IMAGES ──
+   Flipped pages show on the left. We render a static "left page" background
+   that updates to show the current verso image. This is simpler & more reliable
+   than relying on the back face (which requires perfect 3D alignment).
+   The back face IS still used during the flip animation; once flipped we show
+   the static left page display.
+*/
+.left-display {
+  position:absolute;
+  top:0; left:0;
+  width:50%; height:100%;
+  overflow:hidden;
+  z-index:1;
+  background:var(--paper2);
+}
+.left-display img {
+  position:absolute; inset:0;
+  width:100%; height:100%;
+  object-fit:fill;
+  display:block;
+  -webkit-user-drag:none;
+  pointer-events:none;
+}
+/* Split left display — three strips */
+.left-display.split-left { background:transparent; }
+.left-strip {
+  position:absolute; left:0; width:100%;
+  overflow:hidden;
+  background:var(--paper2);
+}
+.left-strip.ls-top { top:0;       height:35.95%; }
+.left-strip.ls-mid { top:35.95%;  height:27.10%; }
+.left-strip.ls-bot { top:63.05%;  height:36.95%; }
+.left-strip img {
+  position:absolute; inset:0;
+  width:100%; height:100%;
+  object-fit:fill;
+  display:block;
+  -webkit-user-drag:none;
+  pointer-events:none;
+}
+/* Left gutter shadow overlay */
+.left-display::after, .left-display.split-left::after {
+  content:""; position:absolute; inset:0; z-index:10; pointer-events:none;
+  background:linear-gradient(to left, rgba(0,0,0,0.18) 0%, transparent 20%);
+}
+
+/* ── CONTROLS ── */
+.controls {
+  position:fixed; bottom:18px; left:50%; transform:translateX(-50%);
+  z-index:100;
+  display:flex; gap:6px; align-items:center;
+  background:rgba(17,16,9,0.84); backdrop-filter:blur(12px);
+  padding:8px 12px; border-radius:100px;
+  border:0.5px solid rgba(240,232,213,0.12);
+}
+.controls button {
+  background:rgba(240,232,213,0.07); color:rgba(240,232,213,0.8);
+  border:0.5px solid rgba(240,232,213,0.16);
+  padding:7px 11px; border-radius:100px;
+  font-family: var(--ui-font); font-size:11px; letter-spacing:0.08em;
+  cursor:pointer; transition:background 0.15s; white-space:nowrap;
+}
+.controls button:hover { background:rgba(240,232,213,0.14); border-color:rgba(240,232,213,0.3); }
+.controls button:active { transform:scale(0.96); }
+.controls .readout { font-size:11px; letter-spacing:0.1em; color:rgba(240,232,213,0.4); padding:0 8px; }
+.controls .sep { width:0.5px; height:18px; background:rgba(240,232,213,0.14); }
+.page-counter {
+  position:fixed; bottom:18px; right:22px; z-index:100;
+  font-size:10px; letter-spacing:0.2em; color:rgba(240,232,213,0.28); text-transform:uppercase;
+}
+.hint {
+  position:fixed; bottom:68px; left:50%; transform:translateX(-50%);
+  z-index:50; font-size:9px; letter-spacing:0.22em; text-transform:uppercase;
+  color:rgba(240,232,213,0.28); pointer-events:none;
+  animation:hintFade 8s ease forwards 2s; white-space:nowrap;
+}
+@keyframes hintFade { to { opacity:0; } }
+
+@media (max-width:760px) {
+  :root {
+    --page-w:  calc(45vw);
+    --page-h:  calc(45vw * 1.583);
+    --book-w:  calc(90vw);
+    --book-h:  calc(45vw * 1.583);
+  }
+  .masthead .meta { display:none; }
+}
 </style>
 </head>
 <body>
+
 <header class="masthead">
   <div class="title">Ceyx · Seys · Ceix</div>
-  <div class="meta">a parallel narrative by Ovid, Chaucer, Gower, and Kristen Haas Curtis</div>
+  <div class="meta">a parallel narrative · 17 pages</div>
 </header>
+
 <div class="stage" id="stage">
   <div class="zoom-wrap" id="zoomWrap">
     <div class="book" id="book">
-      <div class="book-spine"></div>
+      <div class="book-bg">
+        <div class="book-bg-left"></div>
+        <div class="book-bg-right"></div>
+      </div>
+      <div class="spine-line"></div>
+      <div class="stack-edge"></div>
+      <!-- left display: shows the current verso page -->
+      <div class="left-display" id="leftDisplay"></div>
+      <!-- cut lines for split pages (shown/hidden as needed) -->
+      <div class="cut-line cl-mid" id="cutMid" style="display:none"></div>
+      <div class="cut-line cl-bot" id="cutBot" style="display:none"></div>
+      <!-- pages injected by JS -->
     </div>
   </div>
 </div>
+
 <div class="hint">press &amp; drag any strip · scroll to zoom</div>
 <div class="page-counter" id="pageCounter">p 1 / 17</div>
+
 <div class="controls">
   <button id="btnPrev">← prev</button>
   <button id="btnNext">next →</button>
@@ -67,180 +334,492 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:200;op
   <div class="sep"></div>
   <button id="btnReset">reset</button>
 </div>
+
 <script>
-const FULL={1:1,2:1,15:1,16:1,17:1};
-const N=17;
-const IMG={
-  1:"images/p01-full.jpg",2:"images/p02-full.jpg",
-  15:"images/p15-full.jpg",16:"images/p16-full.jpg",17:"images/p17-full.jpg"
-};
-const SPLIT={};
-for(let p=3;p<=14;p++)SPLIT[p]={top:`images/p${String(p).padStart(2,'0')}-top.jpg`,mid:`images/p${String(p).padStart(2,'0')}-mid.jpg`,bot:`images/p${String(p).padStart(2,'0')}-bot.jpg`};
+/* =============================================================
+   CEYX · SEYS · CEIX
+   Two-page spread layout:
+     Right half = current recto pages (unflipped, stacked)
+     Left half  = current verso (the back of the last flipped page)
 
-const book=document.getElementById("book");
-const bW=()=>book.getBoundingClientRect().width;
-const pages=[];
+   Page types:
+     "full"  — pages 1,2,15,16,17 — one strip, full height
+     "split" — pages 3–14         — three independent strips
 
-for(let pg=1;pg<=N;pg++){
-  if(FULL[pg]){
-    const el=buildFull(pg);
+   Strip proportions from red-line measurement:
+     top: 35.95%   mid: 27.10%   bot: 36.95%
+============================================================= */
+
+const FULL_SET  = new Set([1,2,15,16,17]);
+const N         = 17;
+
+// Image paths
+function imgPath(pg, part) {
+  const p = String(pg).padStart(2,'0');
+  if (FULL_SET.has(pg)) return `images/p${p}-full.jpg`;
+  return `images/p${p}-${part}.jpg`;
+}
+
+const book        = document.getElementById('book');
+const leftDisplay = document.getElementById('leftDisplay');
+const cutMid      = document.getElementById('cutMid');
+const cutBot      = document.getElementById('cutBot');
+
+// Registry of page groups
+// Each entry: { num, type:'full'|'split', els:[], flipped:false }
+const groups = [];
+
+// Build pages — stack so page 1 is on top (highest z-index on right)
+for (let pg = 1; pg <= N; pg++) {
+  if (FULL_SET.has(pg)) {
+    const el = buildFullPage(pg);
     book.appendChild(el);
-    pages.push({type:"full",el,num:pg});
+    groups.push({ num:pg, type:'full', els:[el], flipped:false });
   } else {
-    const {strips,cuts}=buildSplit(pg);
-    strips.forEach(s=>book.appendChild(s));
-    cuts.forEach(c=>book.appendChild(c));
-    pages.push({type:"split",strips,cuts,num:pg});
+    const strips = buildSplitPage(pg);
+    strips.forEach(s => book.appendChild(s));
+    groups.push({ num:pg, type:'split', els:strips, flipped:false,
+                  // track each strip independently
+                  stripAngles:[0,0,0] });
   }
 }
 
-function mkFace(src,isBack){
-  const d=document.createElement("div");
-  d.className="face "+(isBack?"back":"front");
-  if(src){const i=document.createElement("img");i.src=src;i.alt="";i.loading="lazy";d.appendChild(i);}
-  const s=document.createElement("div");s.className="page-shade";d.appendChild(s);
-  return d;
+// Set initial z-indices: page 1 on top of right stack
+function updateZIndices() {
+  // Unflipped pages: earlier pages on top (lower index = higher z on right)
+  // Flipped pages:   earlier pages on top of left stack (lower index = higher z on left)
+  let rightZ = N * 10;
+  let leftZ  = 1;
+  for (let i = 0; i < groups.length; i++) {
+    const g = groups[i];
+    if (!g.flipped) {
+      g.els.forEach(el => el.style.zIndex = rightZ);
+      rightZ -= 10;
+    } else {
+      g.els.forEach(el => el.style.zIndex = leftZ);
+      leftZ++;
+    }
+  }
 }
 
-function buildFull(pg){
-  const el=document.createElement("div");
-  el.className="page-full";
-  el.style.zIndex=N-pg+1;
-  // back face shows next page for context (if next is also a full page)
-  const nextSrc=pg<N&&FULL[pg+1]?IMG[pg+1]:null;
-  el.appendChild(mkFace(IMG[pg],false));
-  el.appendChild(mkFace(nextSrc,true));
-  drag(el,bW);
+// ── BUILD FULL PAGE ──────────────────────────────────────────
+function buildFullPage(pg) {
+  const el = document.createElement('div');
+  el.className = 'page';
+  el.dataset.pg = pg;
+
+  const front = makeFace(false, imgPath(pg, null));
+  const back  = makeFace(true,  null); // back shown via leftDisplay
+  el.appendChild(front);
+  el.appendChild(back);
+
+  attachDrag(el, [el], () => [0], (angles) => {
+    setPageAngle(el, angles[0]);
+    onDragEnd([el], angles, groups.find(g=>g.num===pg));
+  });
   return el;
 }
 
-function buildSplit(pg){
-  const strips=[],cuts=[];
-  const pos=[{top:"0%",h:"33.334%"},{top:"33.333%",h:"33.334%"},{top:"66.666%",h:"33.334%"}];
-  const keys=["top","mid","bot"];
-  keys.forEach((k,si)=>{
-    const el=document.createElement("div");
-    el.className="strip";
-    el.style.top=pos[si].top;el.style.height=pos[si].h;
-    el.style.zIndex=N-pg+1;
-    el.appendChild(mkFace(SPLIT[pg][k],false));
-    el.appendChild(mkFace(null,true));
-    drag(el,bW);
-    strips.push(el);
-    if(si>0){const cl=document.createElement("div");cl.className="cut-line";cl.style.top=pos[si].top;cuts.push(cl);}
+// ── BUILD SPLIT PAGE ─────────────────────────────────────────
+function buildSplitPage(pg) {
+  const CLASSES = ['s-top','s-mid','s-bot'];
+  const PARTS   = ['top','mid','bot'];
+  return PARTS.map((part, si) => {
+    const el = document.createElement('div');
+    el.className = `strip ${CLASSES[si]}`;
+    el.dataset.pg = pg;
+    el.dataset.si = si;
+
+    const front = makeFace(false, imgPath(pg, part));
+    const back  = makeFace(true,  null);
+    el.appendChild(front);
+    el.appendChild(back);
+    return el;
   });
-  return{strips,cuts};
 }
 
-const ANG=new WeakMap();
-const getA=el=>ANG.get(el)??0;
-function setA(el,a,anim){
-  if(anim)el.classList.remove("dragging");else el.classList.add("dragging");
-  el.style.transform=`rotateY(${-a}deg)`;
-  ANG.set(el,a);
-  const sh=Math.sin((Math.min(a,180)/180)*Math.PI)*0.55;
-  const f=el.querySelector(".face.front .page-shade");
-  const b=el.querySelector(".face.back .page-shade");
-  if(f)f.style.opacity=a<90?sh:0;
-  if(b)b.style.opacity=a>=90?sh:0;
+function makeFace(isBack, src) {
+  const d = document.createElement('div');
+  d.className = 'face ' + (isBack ? 'back' : 'front');
+  if (src) {
+    const img = document.createElement('img');
+    img.src = src; img.alt = ''; img.loading = 'lazy';
+    // CRITICAL: prevent browser native image drag
+    img.setAttribute('draggable','false');
+    d.appendChild(img);
+  }
+  const shade = document.createElement('div');
+  shade.className = 'page-shade';
+  d.appendChild(shade);
+  return d;
 }
 
-function drag(el,gW){
-  let dn=false,sx=0,sa=0,pid=null,dp=null;
-  el.addEventListener("pointerdown",e=>{
-    e.stopPropagation();dn=true;pid=e.pointerId;
-    el.setPointerCapture(pid);sx=e.clientX;sa=getA(el);
-    dp={x:e.clientX,y:e.clientY,t:Date.now()};
-    el.classList.add("lifted","dragging");
+// ── ANGLE TRACKING ───────────────────────────────────────────
+const ANG = new WeakMap();
+const getA = el => ANG.get(el) ?? 0;
+
+function setPageAngle(el, a) {
+  a = Math.max(0, Math.min(180, a));
+  el.style.transform = `rotateY(${-a}deg)`;
+  ANG.set(el, a);
+  // Shading
+  const sh = Math.sin((a / 180) * Math.PI) * 0.5;
+  const f  = el.querySelector('.face.front .page-shade');
+  const b  = el.querySelector('.face.back  .page-shade');
+  if (f) f.style.opacity = a < 90  ? sh : 0;
+  if (b) b.style.opacity = a >= 90 ? sh : 0;
+}
+
+// ── DRAG ─────────────────────────────────────────────────────
+function attachDrag(target, els, getAngles, onMove) {
+  let down=false, startX=0, startAngles=[], pid=null, dp=null;
+
+  target.addEventListener('pointerdown', e => {
+    // Only respond to left button / touch
+    if (e.button && e.button !== 0) return;
+    e.stopPropagation();
+    e.preventDefault(); // stops browser image-drag
+    down=true; pid=e.pointerId;
+    target.setPointerCapture(pid);
+    startX=e.clientX;
+    startAngles = getAngles();
+    dp={x:e.clientX, y:e.clientY, t:Date.now()};
+    els.forEach(el => el.classList.add('lifted','dragging'));
   });
-  el.addEventListener("pointermove",e=>{
-    if(!dn)return;e.stopPropagation();
-    setA(el,Math.max(0,Math.min(180,sa-((e.clientX-sx)/gW())*180)),false);
+
+  target.addEventListener('pointermove', e => {
+    if (!down) return;
+    e.stopPropagation(); e.preventDefault();
+    const bw  = book.getBoundingClientRect().width / 2; // half-width = one page
+    const dx  = e.clientX - startX;
+    const delta = (dx / bw) * 180;
+    const newAngles = startAngles.map(sa => Math.max(0, Math.min(180, sa - delta)));
+    newAngles.forEach((a, i) => setPageAngle(els[i], a));
+    onMove(newAngles);
   });
-  const end=e=>{
-    if(!dn)return;dn=false;
-    el.classList.remove("lifted","dragging");
-    try{el.releasePointerCapture(pid);}catch(_){}
-    const mv=dp?Math.hypot(e.clientX-dp.x,e.clientY-dp.y):99;
-    const tap=mv<7&&(Date.now()-dp.t)<320;
-    const cur=getA(el);
-    setA(el,tap?(cur<90?180:0):(cur>=90?180:0),true);
-    dp=null;updateUI();
+
+  const end = e => {
+    if (!down) return; down=false;
+    els.forEach(el => el.classList.remove('lifted','dragging'));
+    try { target.releasePointerCapture(pid); } catch(_) {}
+
+    const moved = dp ? Math.hypot(e.clientX-dp.x, e.clientY-dp.y) : 99;
+    const tap   = moved < 8 && (Date.now()-dp.t) < 350;
+    const cur   = getA(els[0]);
+    const target_angle = tap ? (cur < 90 ? 180 : 0) : (cur >= 90 ? 180 : 0);
+
+    els.forEach(el => {
+      el.classList.remove('dragging');
+      setPageAngle(el, target_angle);
+      // Apply animated transition
+      el.style.transition = 'transform 0.75s cubic-bezier(0.35,0.05,0.2,1)';
+      el.style.transform  = `rotateY(${-target_angle}deg)`;
+      setTimeout(()=>el.style.transition='',800);
+    });
+
+    onMove(els.map(()=>target_angle));
+    dp=null;
   };
-  el.addEventListener("pointerup",end);el.addEventListener("pointercancel",end);
+  target.addEventListener('pointerup',     end);
+  target.addEventListener('pointercancel', end);
 }
 
-const gEls=pg=>pg.type==="full"?[pg.el]:pg.strips;
-const isFlip=pg=>gEls(pg).every(el=>getA(el)>=90);
-const flipG=(pg,a,an)=>gEls(pg).forEach(el=>setA(el,a,an));
+// ── DRAG SETUP PER GROUP ──────────────────────────────────────
+// Re-attach drag after building, now we have the groups array
+groups.forEach(g => {
+  if (g.type === 'full') {
+    const el = g.els[0];
+    // Remove old listeners by re-creating the drag
+    attachGroupDrag(g);
+  } else {
+    g.els.forEach((stripEl, si) => {
+      attachStripDrag(g, si);
+    });
+  }
+});
 
-function updateUI(){
-  pages.forEach((pg,i)=>{
-    const fl=isFlip(pg),z=fl?i+1:N-i;
-    gEls(pg).forEach(el=>el.style.zIndex=z);
-    if(pg.cuts)pg.cuts.forEach(cl=>{cl.style.zIndex=z+1;cl.style.display=fl?"none":"block";});
+function attachGroupDrag(g) {
+  const el = g.els[0];
+  let down=false, startX=0, startA=0, pid=null, dp=null;
+
+  el.addEventListener('pointerdown', e => {
+    if (e.button && e.button !== 0) return;
+    e.stopPropagation(); e.preventDefault();
+    down=true; pid=e.pointerId; el.setPointerCapture(pid);
+    startX=e.clientX; startA=getA(el);
+    dp={x:e.clientX,y:e.clientY,t:Date.now()};
+    el.classList.add('lifted','dragging');
   });
-  let shown=N;
-  for(let i=0;i<pages.length;i++){if(!isFlip(pages[i])){shown=i+1;break;}}
-  document.getElementById("pageCounter").textContent=`p ${Math.min(shown,N)} / ${N}`;
+  el.addEventListener('pointermove', e => {
+    if (!down) return;
+    e.stopPropagation(); e.preventDefault();
+    const bw = book.getBoundingClientRect().width / 2;
+    const a  = Math.max(0,Math.min(180, startA - ((e.clientX-startX)/bw)*180));
+    setPageAngle(el, a);
+    if (a > 90) { g.flipped=true; } else { g.flipped=false; }
+    updateLeftDisplay();
+    updateZIndices();
+    updateCutLines();
+    updateCounter();
+  });
+  const end = e => {
+    if (!down) return; down=false;
+    el.classList.remove('lifted','dragging');
+    try{el.releasePointerCapture(pid);}catch(_){}
+    const moved = dp?Math.hypot(e.clientX-dp.x,e.clientY-dp.y):99;
+    const tap   = moved<8&&(Date.now()-dp.t)<350;
+    const cur   = getA(el);
+    const target = tap?(cur<90?180:0):(cur>=90?180:0);
+    setPageAngle(el, target);
+    // smooth snap
+    requestAnimationFrame(()=>{
+      el.style.transition='transform 0.75s cubic-bezier(0.35,0.05,0.2,1)';
+      el.style.transform=`rotateY(${-target}deg)`;
+      setTimeout(()=>el.style.transition='',800);
+    });
+    g.flipped = target >= 90;
+    dp=null;
+    updateLeftDisplay();
+    updateZIndices();
+    updateCutLines();
+    updateCounter();
+  };
+  el.addEventListener('pointerup',end);
+  el.addEventListener('pointercancel',end);
 }
 
-document.getElementById("btnNext").addEventListener("click",()=>{
-  for(let i=0;i<pages.length;i++){if(!isFlip(pages[i])){flipG(pages[i],180,true);updateUI();return;}}
-});
-document.getElementById("btnPrev").addEventListener("click",()=>{
-  for(let i=pages.length-1;i>=0;i--){if(isFlip(pages[i])){flipG(pages[i],0,true);updateUI();return;}}
-});
-document.getElementById("btnReset").addEventListener("click",()=>{
-  scale=1;tx=0;ty=0;applyX(false);
-  pages.forEach(pg=>flipG(pg,0,true));updateUI();
-});
-updateUI();
+function attachStripDrag(g, si) {
+  const el = g.els[si];
+  let down=false, startX=0, startA=0, pid=null, dp=null;
 
-// zoom/pan
-const stage=document.getElementById("stage"),zw=document.getElementById("zoomWrap"),zl=document.getElementById("zoomLabel");
-let scale=1,tx=0,ty=0;
-const MN=0.4,MX=5;
-function applyX(inst){
-  if(inst)zw.classList.add("instant");else zw.classList.remove("instant");
-  zw.style.transform=`translate(${tx}px,${ty}px) scale(${scale})`;
-  zl.textContent=Math.round(scale*100)+"%";
+  el.addEventListener('pointerdown', e => {
+    if (e.button && e.button !== 0) return;
+    e.stopPropagation(); e.preventDefault();
+    down=true; pid=e.pointerId; el.setPointerCapture(pid);
+    startX=e.clientX; startA=getA(el);
+    dp={x:e.clientX,y:e.clientY,t:Date.now()};
+    el.classList.add('lifted','dragging');
+  });
+  el.addEventListener('pointermove', e => {
+    if (!down) return;
+    e.stopPropagation(); e.preventDefault();
+    const bw = book.getBoundingClientRect().width / 2;
+    const a  = Math.max(0,Math.min(180, startA-((e.clientX-startX)/bw)*180));
+    setPageAngle(el, a);
+    g.stripAngles[si] = a;
+    // Group is "flipped" if ALL strips are flipped
+    g.flipped = g.stripAngles.every(a=>a>=90);
+    updateLeftDisplay();
+    updateZIndices();
+    updateCutLines();
+    updateCounter();
+  });
+  const end = e => {
+    if (!down) return; down=false;
+    el.classList.remove('lifted','dragging');
+    try{el.releasePointerCapture(pid);}catch(_){}
+    const moved = dp?Math.hypot(e.clientX-dp.x,e.clientY-dp.y):99;
+    const tap   = moved<8&&(Date.now()-dp.t)<350;
+    const cur   = getA(el);
+    const target = tap?(cur<90?180:0):(cur>=90?180:0);
+    setPageAngle(el, target);
+    requestAnimationFrame(()=>{
+      el.style.transition='transform 0.75s cubic-bezier(0.35,0.05,0.2,1)';
+      el.style.transform=`rotateY(${-target}deg)`;
+      setTimeout(()=>el.style.transition='',800);
+    });
+    g.stripAngles[si] = target;
+    g.flipped = g.stripAngles.every(a=>a>=90);
+    dp=null;
+    updateLeftDisplay();
+    updateZIndices();
+    updateCutLines();
+    updateCounter();
+  };
+  el.addEventListener('pointerup',end);
+  el.addEventListener('pointercancel',end);
+}
+
+// ── LEFT DISPLAY ─────────────────────────────────────────────
+// Shows the back of the most recently flipped page on the left side.
+function updateLeftDisplay() {
+  // Find the last flipped group
+  let lastFlipped = null;
+  for (let i = groups.length-1; i >= 0; i--) {
+    if (groups[i].flipped) { lastFlipped = groups[i]; break; }
+  }
+
+  leftDisplay.innerHTML = '';
+  leftDisplay.className = 'left-display';
+
+  if (!lastFlipped) {
+    // Nothing flipped — show blank left page
+    return;
+  }
+
+  if (lastFlipped.type === 'full') {
+    // Show this page's image mirrored on left (it's the back/verso)
+    // For a physical book, the back of page N shows page N+1's content
+    // Here we just show the same page image (since it's single-sided artwork)
+    const img = document.createElement('img');
+    img.src = imgPath(lastFlipped.num, null);
+    img.alt = '';
+    img.setAttribute('draggable','false');
+    leftDisplay.appendChild(img);
+  } else {
+    // Split page — show three strips on left
+    leftDisplay.className = 'left-display split-left';
+    const LCLASSES = ['ls-top','ls-mid','ls-bot'];
+    const PARTS    = ['top','mid','bot'];
+    PARTS.forEach((part, si) => {
+      // Only show strip if that strip is flipped
+      const stripAngle = lastFlipped.stripAngles[si];
+      const div = document.createElement('div');
+      div.className = `left-strip ${LCLASSES[si]}`;
+      if (stripAngle >= 90) {
+        const img = document.createElement('img');
+        img.src = imgPath(lastFlipped.num, part);
+        img.alt = '';
+        img.setAttribute('draggable','false');
+        div.appendChild(img);
+      }
+      leftDisplay.appendChild(div);
+    });
+  }
+}
+
+// ── CUT LINES ────────────────────────────────────────────────
+function updateCutLines() {
+  // Show cut lines only on the current top unflipped page if it's a split page
+  const topUnflipped = groups.find(g => !g.flipped);
+  const show = topUnflipped && topUnflipped.type === 'split';
+  cutMid.style.display = show ? 'block' : 'none';
+  cutBot.style.display = show ? 'block' : 'none';
+}
+
+// ── PAGE COUNTER ─────────────────────────────────────────────
+function updateCounter() {
+  const idx = groups.findIndex(g => !g.flipped);
+  const cur = idx === -1 ? N : idx + 1;
+  document.getElementById('pageCounter').textContent = `p ${cur} / ${N}`;
+}
+
+// ── NAV BUTTONS ──────────────────────────────────────────────
+document.getElementById('btnNext').addEventListener('click', () => {
+  const g = groups.find(g => !g.flipped);
+  if (!g) return;
+  flipGroupTo(g, 180);
+});
+
+document.getElementById('btnPrev').addEventListener('click', () => {
+  // Find last flipped
+  for (let i=groups.length-1; i>=0; i--) {
+    if (groups[i].flipped) { flipGroupTo(groups[i], 0); return; }
+  }
+});
+
+function flipGroupTo(g, angle) {
+  g.els.forEach(el => {
+    el.style.transition = 'transform 0.75s cubic-bezier(0.35,0.05,0.2,1)';
+    el.style.transform  = `rotateY(${-angle}deg)`;
+    ANG.set(el, angle);
+    const f = el.querySelector('.face.front .page-shade');
+    const b = el.querySelector('.face.back  .page-shade');
+    if(f) f.style.opacity=0; if(b) b.style.opacity=0;
+    setTimeout(()=>el.style.transition='',800);
+  });
+  if (g.type==='split') g.stripAngles=[angle,angle,angle];
+  g.flipped = angle >= 90;
+  updateLeftDisplay();
+  updateZIndices();
+  updateCutLines();
+  updateCounter();
+}
+
+document.getElementById('btnReset').addEventListener('click', () => {
+  groups.forEach(g => flipGroupTo(g, 0));
+  scale=1; tx=0; ty=0; applyX(false);
+});
+
+// ── INIT ─────────────────────────────────────────────────────
+updateZIndices();
+updateLeftDisplay();
+updateCutLines();
+updateCounter();
+
+// ── ZOOM & PAN ───────────────────────────────────────────────
+const stage    = document.getElementById('stage');
+const zoomWrap = document.getElementById('zoomWrap');
+const zLabel   = document.getElementById('zoomLabel');
+let scale=1, tx=0, ty=0;
+const MN=0.35, MX=5;
+
+function applyX(inst) {
+  if (inst) zoomWrap.classList.add('instant');
+  else      zoomWrap.classList.remove('instant');
+  zoomWrap.style.transform = `translate(${tx}px,${ty}px) scale(${scale})`;
+  zLabel.textContent = Math.round(scale*100)+'%';
 }
 applyX(true);
-stage.addEventListener("wheel",e=>{
+
+stage.addEventListener('wheel', e => {
   e.preventDefault();
-  const r=stage.getBoundingClientRect(),cx=e.clientX-r.left-r.width/2,cy=e.clientY-r.top-r.height/2;
+  const r=stage.getBoundingClientRect();
+  const cx=e.clientX-r.left-r.width/2, cy=e.clientY-r.top-r.height/2;
   const ns=Math.max(MN,Math.min(MX,scale*(1-e.deltaY*0.0018)));
-  const rat=ns/scale;tx=cx-(cx-tx)*rat;ty=cy-(cy-ty)*rat;scale=ns;applyX(true);
+  const rat=ns/scale;
+  tx=cx-(cx-tx)*rat; ty=cy-(cy-ty)*rat; scale=ns;
+  applyX(true);
 },{passive:false});
-document.getElementById("btnZoomIn").addEventListener("click",()=>{scale=Math.min(MX,scale*1.3);applyX(false);});
-document.getElementById("btnZoomOut").addEventListener("click",()=>{scale=Math.max(MN,scale/1.3);applyX(false);});
-let pn=false,pr=null;
-stage.addEventListener("pointerdown",e=>{
-  if(e.target.closest(".page-full,.strip"))return;
-  pn=true;pr={x:e.clientX-tx,y:e.clientY-ty};
-  stage.setPointerCapture(e.pointerId);stage.style.cursor="grabbing";
+
+document.getElementById('btnZoomIn').addEventListener('click',()=>{scale=Math.min(MX,scale*1.3);applyX(false);});
+document.getElementById('btnZoomOut').addEventListener('click',()=>{scale=Math.max(MN,scale/1.3);applyX(false);});
+
+let panning=false, panRef=null;
+stage.addEventListener('pointerdown', e => {
+  if (e.target.closest('.page,.strip')) return;
+  panning=true; panRef={x:e.clientX-tx,y:e.clientY-ty};
+  stage.setPointerCapture(e.pointerId); stage.style.cursor='grabbing';
 });
-stage.addEventListener("pointermove",e=>{if(!pn)return;tx=e.clientX-pr.x;ty=e.clientY-pr.y;applyX(true);});
-const ep=e=>{if(!pn)return;pn=false;try{stage.releasePointerCapture(e.pointerId);}catch(_){}stage.style.cursor="";};
-stage.addEventListener("pointerup",ep);stage.addEventListener("pointercancel",ep);
-const tc=new Map();let pd0=0,ps0=1;
-stage.addEventListener("pointerdown",e=>{if(e.pointerType==="touch")tc.set(e.pointerId,e);});
-stage.addEventListener("pointermove",e=>{
-  if(e.pointerType!=="touch"||!tc.has(e.pointerId))return;
+stage.addEventListener('pointermove', e => {
+  if (!panning) return;
+  tx=e.clientX-panRef.x; ty=e.clientY-panRef.y; applyX(true);
+});
+const endPan=e=>{if(!panning)return;panning=false;try{stage.releasePointerCapture(e.pointerId);}catch(_){}stage.style.cursor='';};
+stage.addEventListener('pointerup',endPan);stage.addEventListener('pointercancel',endPan);
+
+// Pinch zoom
+const tc=new Map(); let pd0=0,ps0=1;
+stage.addEventListener('pointerdown',e=>{if(e.pointerType==='touch')tc.set(e.pointerId,e);});
+stage.addEventListener('pointermove',e=>{
+  if(e.pointerType!=='touch'||!tc.has(e.pointerId))return;
   tc.set(e.pointerId,e);
-  if(tc.size===2){pn=false;const[a,b]=[...tc.values()],d=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);
-    if(!pd0){pd0=d;ps0=scale;}else{scale=Math.max(MN,Math.min(MX,ps0*d/pd0));applyX(true);}}
+  if(tc.size===2){
+    panning=false;
+    const[a,b]=[...tc.values()];
+    const d=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);
+    if(!pd0){pd0=d;ps0=scale;}
+    else{scale=Math.max(MN,Math.min(MX,ps0*d/pd0));applyX(true);}
+  }
 });
-["pointerup","pointercancel"].forEach(ev=>stage.addEventListener(ev,e=>{tc.delete(e.pointerId);if(tc.size<2)pd0=0;}));
-function fit(){
-  const mw=window.innerWidth-80,mh=window.innerHeight-140,r=520/735;
-  let w=Math.min(520,mw),h=w/r;if(h>mh){h=mh;w=h*r;}
-  document.documentElement.style.setProperty("--book-w",w+"px");
-  document.documentElement.style.setProperty("--book-h",h+"px");
+['pointerup','pointercancel'].forEach(ev=>stage.addEventListener(ev,e=>{tc.delete(e.pointerId);if(tc.size<2)pd0=0;}));
+
+// Fit to screen
+function fit() {
+  const mw=window.innerWidth-60, mh=window.innerHeight-120;
+  // book is 2:1 wide — aspect = book-w/book-h = 2*(432/684) = 1.263
+  const aspect = 2 * (432/684);
+  let w=Math.min(760,mw), h=w/aspect;
+  if(h>mh){h=mh;w=h*aspect;}
+  const pw=w/2, ph=h;
+  document.documentElement.style.setProperty('--page-w', pw+'px');
+  document.documentElement.style.setProperty('--page-h', ph+'px');
+  document.documentElement.style.setProperty('--book-w', w+'px');
+  document.documentElement.style.setProperty('--book-h', h+'px');
 }
-fit();window.addEventListener("resize",fit);
-document.addEventListener("touchmove",e=>{if(e.touches.length>1)e.preventDefault();},{passive:false});
+fit();
+window.addEventListener('resize',fit);
+document.addEventListener('touchmove',e=>{if(e.touches.length>1)e.preventDefault();},{passive:false});
 </script>
 </body>
 </html>
