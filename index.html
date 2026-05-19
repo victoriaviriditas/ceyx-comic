@@ -90,6 +90,14 @@ body::after {
   border-radius:4px 0 0 4px;
   box-shadow:inset -2px 0 6px rgba(0,0,0,0.12);
 }
+.book-bg-left {
+  opacity:0;
+  transition:opacity 0.2s ease;
+}
+
+.book.has-left-page .book-bg-left {
+  opacity:1;
+}
 .book-bg-right {
   border-radius:0 4px 4px 0;
   box-shadow:inset 2px 0 6px rgba(0,0,0,0.12);
@@ -653,16 +661,19 @@ function updateLeftDisplay() {
   leftDisplay.className = 'left-display';
 
   if (!lastFlipped) {
-    // Nothing flipped — show blank left page
-    return;
-  }
+  leftDisplay.style.visibility = 'hidden';
+  return;
+}
+
+leftDisplay.style.visibility = 'visible';
 
   if (lastFlipped.type === 'full') {
     // Show this page's image mirrored on left (it's the back/verso)
     // For a physical book, the back of page N shows page N+1's content
     // Here we just show the same page image (since it's single-sided artwork)
     const img = document.createElement('img');
-    img.src = imgPath(lastFlipped.num, null);
+    const nextPage = Math.min(lastFlipped.num + 1, N);
+    img.src = imgPath(nextPage, null);
     img.alt = '';
     img.setAttribute('draggable','false');
     leftDisplay.appendChild(img);
