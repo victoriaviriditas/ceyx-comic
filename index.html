@@ -5,301 +5,282 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Ceyx · Seys · Ceix</title>
 <style>
+/*
+  ARCHITECTURE — open book, two-page spread
+  ==========================================
+  The book is two pages wide. The RIGHT half shows the current
+  unread page. The LEFT half is always the BACK FACE of the most
+  recently flipped leaf — rendered via CSS 3D, no fake divs.
+
+  Each leaf (page element) sits on the RIGHT half, origin at the
+  book's centre spine. Flipping rotates it -180° around that
+  spine, landing its back face on the LEFT half.
+
+  Back faces carry the NEXT page's artwork, so after the flip:
+    left  = back of leaf N  = content of page N+1 (already read)
+    right = front of leaf N+1 = content of page N+1 (now current)
+
+  Wait — that would show N+1 twice. Correct pairing:
+    Leaf 1 front = page 1,  back = page 2
+    Leaf 2 front = page 3,  back = page 4
+    Leaf 3 front = page 5,  back = page 6
+    ...etc (paired like a real book)
+
+  For this zine we have 17 pages so leaf count = ceil(17/2) = 9 leaves.
+  Leaf 9 front = page 17, back = blank.
+
+  Split pages (3–14) — both the front AND back of a leaf can be
+  split strips. Each strip flips independently.
+*/
+
 :root {
-  --paper:   #f0e8d5;
-  --paper2:  #e8dfc8;
-  --spine:   #c8b89a;
-  --bg:      #111009;
-  --ui-font: 'ainslie-sans', 'Helvetica Neue', Arial, sans-serif;
-  --ui-color: #424242;
-  /* Book is TWO pages wide — left (read) + right (unread) */
-  --page-w:  360px;
-  --page-h:  509px; /* page-w * (684/432) actual PDF ratio */
-  --book-w:  720px; /* 2 × page-w */
-  --book-h:  509px;
+  --paper:    #f0e8d5;
+  --paper2:   #ede3cc;
+  --spine-c:  #c8b89a;
+  --bg:       #111009;
+  --ui-font:  'ainslie-sans','Helvetica Neue',Arial,sans-serif;
+  --page-w:   340px;
+  --page-h:   481px;   /* 340 × 684/432 */
+  --book-w:   680px;
+  --book-h:   481px;
 }
-*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
-html, body {
-  height:100%; overflow:hidden;
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+
+html,body{
+  height:100%;overflow:hidden;
   background:var(--bg);
-  font-family: var(--ui-font);
-  font-weight: 400;
-  line-height: 1.5;
+  font-family:var(--ui-font);
+  font-weight:400;line-height:1.5;
   touch-action:none;
-  -webkit-user-select:none; user-select:none;
+  -webkit-user-select:none;user-select:none;
 }
-body::after {
-  content:""; position:fixed; inset:0; pointer-events:none; z-index:200;
-  opacity:0.14;
-  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.1 0 0 0 0 0.08 0 0 0 0 0.05 0 0 0 0.5 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+
+body::after{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:999;
+  opacity:0.13;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.1 0 0 0 0 0.05 0 0 0 0 0.03 0 0 0 0.45 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
 }
-.masthead {
-  position:fixed; top:0; left:0; right:0;
-  padding:14px 22px;
-  display:flex; justify-content:space-between; align-items:baseline;
-  z-index:50; pointer-events:none;
+
+/* ── MASTHEAD ── */
+.masthead{
+  position:fixed;top:0;left:0;right:0;padding:14px 22px;
+  display:flex;justify-content:space-between;align-items:baseline;
+  z-index:50;pointer-events:none;
 }
-.masthead .title {
-  font-family: var(--ui-font);
-  font-size: 18px; font-weight: 400; letter-spacing: 0.08em;
-  text-transform: uppercase; color: rgba(240,232,213,0.9);
+.masthead .title{
+  font-family:var(--ui-font);font-size:15px;font-weight:400;
+  letter-spacing:0.14em;text-transform:uppercase;
+  color:rgba(240,232,213,0.85);
 }
-.masthead .meta {
-  font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase;
-  color: rgba(240,232,213,0.32);
+.masthead .meta{
+  font-size:10px;letter-spacing:0.2em;text-transform:uppercase;
+  color:rgba(240,232,213,0.28);
 }
 
 /* ── STAGE ── */
-.stage {
-  position:fixed; inset:0;
-  display:flex; align-items:center; justify-content:center;
+.stage{
+  position:fixed;inset:0;
+  display:flex;align-items:center;justify-content:center;
   overflow:hidden;
 }
-.zoom-wrap {
+.zoom-wrap{
   transform-origin:center center;
-  transition:transform 0.38s cubic-bezier(0.2,0.8,0.2,1);
+  transition:transform 0.36s cubic-bezier(0.2,0.8,0.2,1);
   will-change:transform;
 }
-.zoom-wrap.instant { transition:none; }
+.zoom-wrap.instant{transition:none;}
 
-/* ── BOOK FRAME ──
-   Left half = verso (already-read pages pile up here)
-   Right half = recto (unread pages stack here, flip leftward)
-*/
-.book {
+/* ── BOOK ── */
+.book{
   width:var(--book-w);
   height:var(--book-h);
   position:relative;
-  perspective:2800px;
+  perspective:2600px;
   filter:
-    drop-shadow(0 2px 2px rgba(0,0,0,0.5))
-    drop-shadow(0 18px 36px rgba(0,0,0,0.6))
-    drop-shadow(0 50px 70px rgba(0,0,0,0.35));
+    drop-shadow(0 3px 3px rgba(0,0,0,0.5))
+    drop-shadow(0 16px 32px rgba(0,0,0,0.65))
+    drop-shadow(0 50px 70px rgba(0,0,0,0.4));
 }
 
-/* Background paper — both halves visible always */
-.book-bg {
-  position:absolute; inset:0;
-  display:flex;
-}
-.book-bg-left, .book-bg-right {
-  flex:1; height:100%;
+/* Left page background — hidden until first leaf flips */
+.bg-left{
+  position:absolute;top:0;left:0;width:50%;height:100%;
   background:var(--paper2);
-}
-.book-bg-left {
-  border-radius:4px 0 0 4px;
-  box-shadow:inset -2px 0 6px rgba(0,0,0,0.12);
-}
-.book-bg-left {
+  border-radius:3px 0 0 3px;
+  box-shadow:inset -1px 0 4px rgba(0,0,0,0.1);
   opacity:0;
-  transition:opacity 0.2s ease;
+  transition:opacity 0.4s ease;
 }
-
-.book.has-left-page .book-bg-left {
+.book.has-flipped .bg-left{
   opacity:1;
 }
-.book-bg-right {
-  border-radius:0 4px 4px 0;
-  box-shadow:inset 2px 0 6px rgba(0,0,0,0.12);
+/* Right page background */
+.bg-right{
+  position:absolute;top:0;right:0;width:50%;height:100%;
+  background:var(--paper);
+  border-radius:0 3px 3px 0;
+  box-shadow:inset 1px 0 4px rgba(0,0,0,0.08);
 }
-
-/* Centre spine line */
-.spine-line {
-  position:absolute; top:0; bottom:0;
-  left:50%; width:2px; margin-left:-1px;
-  background:linear-gradient(to bottom,
-    rgba(0,0,0,0.0), rgba(0,0,0,0.22) 20%, rgba(0,0,0,0.22) 80%, rgba(0,0,0,0.0));
-  z-index:5; pointer-events:none;
-}
-/* Page-stack edge on right */
-.stack-edge {
-  position:absolute; top:4px; bottom:4px; right:-4px; width:6px;
+/* Page stack edge */
+.bg-right::after{
+  content:"";position:absolute;top:3px;bottom:3px;right:-5px;width:6px;
   background:repeating-linear-gradient(
-    to bottom,var(--spine) 0,var(--spine) 1px,var(--paper) 1px,var(--paper) 4px
+    to bottom,var(--spine-c) 0,var(--spine-c) 1px,var(--paper) 1px,var(--paper) 4px
   );
-  border-radius:0 2px 2px 0; z-index:0;
+  border-radius:0 2px 2px 0;
+}
+/* Spine shadow — hidden until first flip */
+.spine{
+  position:absolute;top:0;bottom:0;left:50%;
+  width:4px;margin-left:-2px;
+  background:linear-gradient(to right,
+    rgba(0,0,0,0.25),rgba(0,0,0,0.08) 50%,rgba(0,0,0,0.0));
+  z-index:10;pointer-events:none;
+  opacity:0;
+  transition:opacity 0.4s ease;
+}
+.book.has-flipped .spine{
+  opacity:1;
 }
 
-/* ── PAGE ELEMENT ──
-   Each page lives on the RIGHT half (recto).
-   transform-origin is the LEFT edge of the right half = centre of book.
-   When rotated -180° it lands on the left half (verso), showing its back face.
+/* ── LEAF ──
+   Sits on the RIGHT half, pivots at the spine (left edge of right half).
+   Front face = recto (right, current page).
+   Back face  = verso (left, previous page — visible after flip).
 */
-.page {
+.leaf{
   position:absolute;
-  top:0;
-  left:50%;            /* starts at book centre */
-  width:50%;           /* covers right half */
-  height:100%;
+  top:0;left:50%;
+  width:50%;height:100%;
   transform-origin:left center;
   transform-style:preserve-3d;
-  transition:transform 0.75s cubic-bezier(0.35,0.05,0.2,1);
   will-change:transform;
   cursor:grab;
-  /* Pages stack: first page on top, successive pages behind */
+  /* z managed by JS */
 }
-.page.dragging { transition:none; cursor:grabbing; }
-.page.lifted   { filter:drop-shadow(0 10px 20px rgba(0,0,0,0.3)); }
+.leaf.animating{
+  transition:transform 0.78s cubic-bezier(0.36,0.07,0.19,0.97);
+}
+.leaf.dragging{cursor:grabbing;}
 
-/* Front face = recto (right side, unread) */
-.face {
-  position:absolute; inset:0;
-  backface-visibility:hidden; -webkit-backface-visibility:hidden;
-  background:var(--paper);
+/* ── FACE ── */
+.face{
+  position:absolute;inset:0;
+  backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;
   overflow:hidden;
+  background:var(--paper);
 }
-.face.back {
+.face.back{
   transform:rotateY(180deg);
   background:var(--paper2);
 }
-.face img {
-  position:absolute; inset:0;
-  width:100%; height:100%;
-  object-fit:fill;   /* fill exactly — no letterboxing */
+.face img{
+  position:absolute;inset:0;
+  width:100%;height:100%;
+  object-fit:fill;
   display:block;
-  -webkit-user-drag:none; /* PREVENT browser image drag */
-  user-drag:none;
   pointer-events:none;
+  -webkit-user-drag:none;
+  draggable:false;
 }
-/* Gutter shadows */
-.face::after {
-  content:""; position:absolute; inset:0; z-index:4; pointer-events:none;
+/* Gutter shadow on front (left edge) */
+.face.front::after{
+  content:"";position:absolute;inset:0;z-index:3;pointer-events:none;
+  background:linear-gradient(to right,rgba(0,0,0,0.22),transparent 18%);
 }
-.face.front::after {
-  background:linear-gradient(to right, rgba(0,0,0,0.22) 0%, transparent 18%);
+/* Gutter shadow on back (right edge, mirrored) */
+.face.back::after{
+  content:"";position:absolute;inset:0;z-index:3;pointer-events:none;
+  background:linear-gradient(to left,rgba(0,0,0,0.22),transparent 18%);
 }
-.face.back::after {
-  background:linear-gradient(to left, rgba(0,0,0,0.22) 0%, transparent 18%);
+/* Dynamic flip shading */
+.shade{
+  position:absolute;inset:0;z-index:4;pointer-events:none;opacity:0;
+  background:linear-gradient(to right,rgba(0,0,0,0.4),transparent 70%);
 }
-/* Turn shading */
-.page-shade {
-  position:absolute; inset:0; z-index:5; pointer-events:none; opacity:0;
-  background:linear-gradient(to right,rgba(0,0,0,0.35),rgba(0,0,0,0.05) 60%,transparent);
+.face.back .shade{
+  background:linear-gradient(to left,rgba(0,0,0,0.4),transparent 70%);
 }
 
-/* ── SPLIT PAGE STRIPS ──
-   A split page is 3 .strip elements, each absolutely positioned
-   within the RIGHT half of the book, with unequal heights
-   matching the red-line proportions:
-     top: 35.95%
-     mid: 27.10%
-     bot: 36.95%
+/* ── SPLIT LEAF ──
+   A split leaf has 3 .strip elements instead of one .leaf.
+   Each strip covers its vertical slice of the right half,
+   flips independently around the spine.
 */
-.strip {
+.strip{
   position:absolute;
   left:50%;
   width:50%;
   transform-origin:left center;
   transform-style:preserve-3d;
-  transition:transform 0.75s cubic-bezier(0.35,0.05,0.2,1);
   will-change:transform;
   cursor:grab;
 }
-.strip.dragging { transition:none; cursor:grabbing; }
-.strip.lifted   { filter:drop-shadow(0 8px 16px rgba(0,0,0,0.3)); }
+.strip.animating{
+  transition:transform 0.78s cubic-bezier(0.36,0.07,0.19,0.97);
+}
+.strip.dragging{cursor:grabbing;}
 
-/* Strip positions — unequal, matching red lines */
-.strip.s-top { top:0;       height:35.95%; }
-.strip.s-mid { top:35.95%;  height:27.10%; }
-.strip.s-bot { top:63.05%;  height:36.95%; }
+/* Proportions from red-line guide */
+.s-top{top:0;      height:35.95%;}
+.s-mid{top:35.95%; height:27.10%;}
+.s-bot{top:63.05%; height:36.95%;}
 
-/* Cut lines between strips */
-.cut-line {
-  position:absolute; left:50%; right:0; height:1px;
-  background:linear-gradient(to right,
-    rgba(28,24,20,0.18) 0%, rgba(28,24,20,0.18) 92%, transparent);
-  z-index:8; pointer-events:none;
+/* Cut lines */
+.cut{
+  position:absolute;left:50%;right:0;height:1px;
+  background:rgba(0,0,0,0.14);
+  z-index:20;pointer-events:none;
 }
-.cut-line.cl-mid { top:35.95%; }
-.cut-line.cl-bot { top:63.05%; }
-
-/* ── LEFT SIDE PAGE IMAGES ──
-   Flipped pages show on the left. We render a static "left page" background
-   that updates to show the current verso image. This is simpler & more reliable
-   than relying on the back face (which requires perfect 3D alignment).
-   The back face IS still used during the flip animation; once flipped we show
-   the static left page display.
-*/
-.left-display {
-  position:absolute;
-  top:0; left:0;
-  width:50%; height:100%;
-  overflow:hidden;
-  z-index:6;
-  background:transparent;
-}
-.left-display img {
-  position:absolute; inset:0;
-  width:100%; height:100%;
-  object-fit:fill;
-  display:block;
-  -webkit-user-drag:none;
-  pointer-events:none;
-}
-/* Split left display — three strips */
-.left-display.split-left { background:transparent; }
-.left-strip {
-  position:absolute; left:0; width:100%;
-  overflow:hidden;
-  background:var(--paper2);
-}
-.left-strip.ls-top { top:0;       height:35.95%; }
-.left-strip.ls-mid { top:35.95%;  height:27.10%; }
-.left-strip.ls-bot { top:63.05%;  height:36.95%; }
-.left-strip img {
-  position:absolute; inset:0;
-  width:100%; height:100%;
-  object-fit:fill;
-  display:block;
-  -webkit-user-drag:none;
-  pointer-events:none;
-}
-/* Left gutter shadow overlay */
-.left-display::after, .left-display.split-left::after {
-  content:""; position:absolute; inset:0; z-index:10; pointer-events:none;
-  background:linear-gradient(to left, rgba(0,0,0,0.18) 0%, transparent 20%);
-}
+.cut-mid{top:35.95%;}
+.cut-bot{top:63.05%;}
 
 /* ── CONTROLS ── */
-.controls {
-  position:fixed; bottom:18px; left:50%; transform:translateX(-50%);
+.controls{
+  position:fixed;bottom:18px;left:50%;transform:translateX(-50%);
   z-index:100;
-  display:flex; gap:6px; align-items:center;
-  background:rgba(17,16,9,0.84); backdrop-filter:blur(12px);
-  padding:8px 12px; border-radius:100px;
-  border:0.5px solid rgba(240,232,213,0.12);
+  display:flex;gap:5px;align-items:center;
+  background:rgba(12,11,6,0.88);backdrop-filter:blur(14px);
+  padding:7px 11px;border-radius:100px;
+  border:0.5px solid rgba(240,232,213,0.1);
 }
-.controls button {
-  background:rgba(240,232,213,0.07); color:rgba(240,232,213,0.8);
-  border:0.5px solid rgba(240,232,213,0.16);
-  padding:7px 11px; border-radius:100px;
-  font-family: var(--ui-font); font-size:11px; letter-spacing:0.08em;
-  cursor:pointer; transition:background 0.15s; white-space:nowrap;
+.controls button{
+  background:rgba(240,232,213,0.07);color:rgba(240,232,213,0.8);
+  border:0.5px solid rgba(240,232,213,0.15);
+  padding:6px 12px;border-radius:100px;
+  font-family:var(--ui-font);font-size:11px;letter-spacing:0.1em;
+  text-transform:uppercase;cursor:pointer;
+  transition:background 0.15s;white-space:nowrap;
 }
-.controls button:hover { background:rgba(240,232,213,0.14); border-color:rgba(240,232,213,0.3); }
-.controls button:active { transform:scale(0.96); }
-.controls .readout { font-size:11px; letter-spacing:0.1em; color:rgba(240,232,213,0.4); padding:0 8px; }
-.controls .sep { width:0.5px; height:18px; background:rgba(240,232,213,0.14); }
-.page-counter {
-  position:fixed; bottom:18px; right:22px; z-index:100;
-  font-size:10px; letter-spacing:0.2em; color:rgba(240,232,213,0.28); text-transform:uppercase;
-}
-.hint {
-  position:fixed; bottom:68px; left:50%; transform:translateX(-50%);
-  z-index:50; font-size:9px; letter-spacing:0.22em; text-transform:uppercase;
-  color:rgba(240,232,213,0.28); pointer-events:none;
-  animation:hintFade 8s ease forwards 2s; white-space:nowrap;
-}
-@keyframes hintFade { to { opacity:0; } }
+.controls button:hover{background:rgba(240,232,213,0.14);border-color:rgba(240,232,213,0.28);}
+.controls button:active{transform:scale(0.95);}
+.controls .sep{width:0.5px;height:16px;background:rgba(240,232,213,0.12);}
+.controls .readout{font-size:11px;color:rgba(240,232,213,0.38);padding:0 6px;letter-spacing:0.08em;}
 
-@media (max-width:760px) {
-  :root {
-    --page-w:  calc(45vw);
-    --page-h:  calc(45vw * 1.583);
-    --book-w:  calc(90vw);
-    --book-h:  calc(45vw * 1.583);
+.pg-counter{
+  position:fixed;bottom:18px;right:20px;z-index:100;
+  font-size:10px;letter-spacing:0.2em;text-transform:uppercase;
+  color:rgba(240,232,213,0.28);
+}
+
+.hint{
+  position:fixed;bottom:62px;left:50%;transform:translateX(-50%);
+  z-index:50;font-size:9px;letter-spacing:0.22em;text-transform:uppercase;
+  color:rgba(240,232,213,0.28);pointer-events:none;
+  animation:bye 7s ease forwards 2.5s;white-space:nowrap;
+}
+@keyframes bye{to{opacity:0;}}
+
+@media(max-width:700px){
+  :root{
+    --page-w:calc(44vw);
+    --page-h:calc(44vw * 1.5833);
+    --book-w:calc(88vw);
+    --book-h:calc(44vw * 1.5833);
   }
-  .masthead .meta { display:none; }
+  .masthead .meta{display:none;}
 }
 </style>
 </head>
@@ -307,477 +288,348 @@ body::after {
 
 <header class="masthead">
   <div class="title">Ceyx · Seys · Ceix</div>
-  <div class="meta">a parallel narrative by Ovid, Chaucer, Gower, and Kristen Haas Curtis</div>
+  <div class="meta">a parallel narrative · 17 pages</div>
 </header>
 
 <div class="stage" id="stage">
-  <div class="zoom-wrap" id="zoomWrap">
+  <div class="zoom-wrap" id="zw">
     <div class="book" id="book">
-      <div class="book-bg">
-        <div class="book-bg-left"></div>
-        <div class="book-bg-right"></div>
-      </div>
-      <div class="spine-line"></div>
-      <div class="stack-edge"></div>
-      <!-- left display: shows the current verso page -->
-      <div class="left-display" id="leftDisplay"></div>
-      <!-- cut lines for split pages (shown/hidden as needed) -->
-      <div class="cut-line cl-mid" id="cutMid" style="display:none"></div>
-      <div class="cut-line cl-bot" id="cutBot" style="display:none"></div>
-      <!-- pages injected by JS -->
+      <div class="bg-left"></div>
+      <div class="bg-right"></div>
+      <div class="spine"></div>
+      <!-- leaves injected by JS -->
     </div>
   </div>
 </div>
 
-<div class="hint">press &amp; drag any strip · scroll to zoom</div>
-<div class="page-counter" id="pageCounter">p 1 / 17</div>
+<div class="hint">drag or click to turn pages · scroll to zoom</div>
+<div class="pg-counter" id="pgc">p 1 / 17</div>
 
 <div class="controls">
-  <button id="btnPrev">← prev</button>
-  <button id="btnNext">next →</button>
+  <button id="bPrev">← prev</button>
+  <button id="bNext">next →</button>
   <div class="sep"></div>
-  <button id="btnZoomOut">−</button>
-  <div class="readout" id="zoomLabel">100%</div>
-  <button id="btnZoomIn">+</button>
+  <button id="bZOut">−</button>
+  <div class="readout" id="zLbl">100%</div>
+  <button id="bZIn">+</button>
   <div class="sep"></div>
-  <button id="btnReset">reset</button>
+  <button id="bReset">reset</button>
 </div>
 
 <script>
 /* =============================================================
-   CEYX · SEYS · CEIX
-   Two-page spread layout:
-     Right half = current recto pages (unflipped, stacked)
-     Left half  = current verso (the back of the last flipped page)
+  LEAF PAIRING
+  The zine has 17 pages. We pair them into 9 leaves:
+    Leaf 0: front=p1,  back=p2
+    Leaf 1: front=p3,  back=p4
+    Leaf 2: front=p5,  back=p6
+    Leaf 3: front=p7,  back=p8
+    Leaf 4: front=p9,  back=p10
+    Leaf 5: front=p11, back=p12
+    Leaf 6: front=p13, back=p14
+    Leaf 7: front=p15, back=p16
+    Leaf 8: front=p17, back=blank
 
-   Page types:
-     "full"  — pages 1,2,15,16,17 — one strip, full height
-     "split" — pages 3–14         — three independent strips
+  Split pages (3–14) are leaves 1–6 — both faces split into strips.
+  Full pages (1,2,15,16,17) are leaves 0,7,8 — single faces.
 
-   Strip proportions from red-line measurement:
-     top: 35.95%   mid: 27.10%   bot: 36.95%
+  When leaf N is unflipped:   front shows on RIGHT
+  When leaf N is flipped 180°: back shows on LEFT, front hidden
+
+  This means the left side is ALWAYS the back face of the
+  most-recently-flipped leaf — no fake div needed.
 ============================================================= */
 
-const FULL_SET  = new Set([1,2,15,16,17]);
-const N         = 18;
+const LEAVES = [
+  // { front, back, split }
+  // front/back = page number (1-indexed), 0 = blank
+  // split = true if these pages use the three-strip format
+  { front:1,  back:2,  split:false },  // leaf 0
+  { front:3,  back:4,  split:true  },  // leaf 1
+  { front:5,  back:6,  split:true  },  // leaf 2
+  { front:7,  back:8,  split:true  },  // leaf 3
+  { front:9,  back:10, split:true  },  // leaf 4
+  { front:11, back:12, split:true  },  // leaf 5
+  { front:13, back:14, split:true  },  // leaf 6
+  { front:15, back:16, split:false },  // leaf 7
+  { front:17, back:0,  split:false },  // leaf 8
+];
 
-// Image paths
-function imgPath(pg, part) {
-
-  // blank inside-cover page
-  if (pg === 0) return 'images/blank.jpg';
-
+function img(pg, part) {
+  if (!pg) return null;
   const p = String(pg).padStart(2,'0');
-
-  if (FULL_SET.has(pg)) {
-    return `images/p${p}-full.jpg`;
-  }
-
+  const FULL = new Set([1,2,15,16,17]);
+  if (FULL.has(pg)) return `images/p${p}-full.jpg`;
   return `images/p${p}-${part}.jpg`;
 }
 
-const book        = document.getElementById('book');
-const leftDisplay = document.getElementById('leftDisplay');
-const cutMid      = document.getElementById('cutMid');
-const cutBot      = document.getElementById('cutBot');
+const book  = document.getElementById('book');
+const PARTS = ['top','mid','bot'];
+const SCLS  = ['s-top','s-mid','s-bot'];
 
-// Registry of page groups
-// Each entry: { num, type:'full'|'split', els:[], flipped:false }
-const groups = [];
+// Registered leaves: { el | strips[], angle, splitAngles[] }
+const leaves = [];
 
-// Build pages — stack so page 1 is on top (highest z-index on right)
-for (let pg = 1; pg <= N; pg++) {
-  if (FULL_SET.has(pg)) {
-    const el = buildFullPage(pg);
-    book.appendChild(el);
-    groups.push({ num:pg, type:'full', els:[el], flipped:false });
+LEAVES.forEach((def, li) => {
+  if (!def.split) {
+    // ── FULL LEAF ──
+    const leaf = mkLeaf(def);
+    book.appendChild(leaf.el);
+    leaves.push(leaf);
   } else {
-    const strips = buildSplitPage(pg);
-    strips.forEach(s => book.appendChild(s));
-    groups.push({ num:pg, type:'split', els:strips, flipped:false,
-                  // track each strip independently
-                  stripAngles:[0,0,0] });
+    // ── SPLIT LEAF ──
+    // Three strips, plus cut lines
+    const leaf = mkSplitLeaf(def, li);
+    leaf.strips.forEach(s => book.appendChild(s.el));
+    // Cut lines sit between strips on the right half
+    const cm = mk('div','cut cut-mid'); book.appendChild(cm);
+    const cb = mk('div','cut cut-bot'); book.appendChild(cb);
+    leaf.cutMid = cm; leaf.cutBot = cb;
+    leaves.push(leaf);
   }
+});
+
+function mkLeaf(def) {
+  const el = mk('div','leaf');
+  el.appendChild(mkFace(false, img(def.front, null)));
+  el.appendChild(mkFace(true,  img(def.back,  null)));
+  const leaf = { el, angle:0, split:false };
+  attachLeafDrag(leaf, el);
+  return leaf;
 }
 
-// Set initial z-indices: page 1 on top of right stack
-function updateZIndices() {
-  // Unflipped pages: earlier pages on top (lower index = higher z on right)
-  // Flipped pages:   earlier pages on top of left stack (lower index = higher z on left)
-  let rightZ = N * 10;
-  let leftZ  = 1;
-  for (let i = 0; i < groups.length; i++) {
-    const g = groups[i];
-    if (!g.flipped) {
-      g.els.forEach(el => el.style.zIndex = rightZ);
-      rightZ -= 10;
-    } else {
-      g.els.forEach(el => el.style.zIndex = leftZ);
-      leftZ++;
-    }
-  }
-}
-
-// ── BUILD FULL PAGE ──────────────────────────────────────────
-function buildFullPage(pg) {
-  const el = document.createElement('div');
-  el.className = 'page';
-  el.dataset.pg = pg;
-
-  const front = makeFace(false, imgPath(pg, null));
-  const back  = makeFace(true,  null); // back shown via leftDisplay
-  el.appendChild(front);
-  el.appendChild(back);
-
-  attachDrag(el, [el], () => [0], (angles) => {
-    setPageAngle(el, angles[0]);
-    onDragEnd([el], angles, groups.find(g=>g.num===pg));
+function mkSplitLeaf(def, li) {
+  const strips = PARTS.map((part, si) => {
+    const el = mk('div', `strip ${SCLS[si]}`);
+    el.appendChild(mkFace(false, img(def.front, part)));
+    el.appendChild(mkFace(true,  img(def.back,  part)));
+    return { el, angle:0 };
   });
-  return el;
+  const leaf = { strips, splitAngles:[0,0,0], split:true,
+    get angle(){ return this.splitAngles[0]; } // used for nav
+  };
+  strips.forEach((s, si) => attachStripDrag(leaf, s, si));
+  return leaf;
 }
 
-// ── BUILD SPLIT PAGE ─────────────────────────────────────────
-function buildSplitPage(pg) {
-  const CLASSES = ['s-top','s-mid','s-bot'];
-  const PARTS   = ['top','mid','bot'];
-  return PARTS.map((part, si) => {
-    const el = document.createElement('div');
-    el.className = `strip ${CLASSES[si]}`;
-    el.dataset.pg = pg;
-    el.dataset.si = si;
-
-    const front = makeFace(false, imgPath(pg, part));
-    const back  = makeFace(true,  null);
-    el.appendChild(front);
-    el.appendChild(back);
-    return el;
-  });
-}
-
-function makeFace(isBack, src) {
-  const d = document.createElement('div');
-  d.className = 'face ' + (isBack ? 'back' : 'front');
+function mkFace(isBack, src) {
+  const d = mk('div', isBack ? 'face back' : 'face front');
   if (src) {
-    const img = document.createElement('img');
-    img.src = src; img.alt = ''; img.loading = 'lazy';
-    // CRITICAL: prevent browser native image drag
-    img.setAttribute('draggable','false');
-    d.appendChild(img);
+    const i = mk('img');
+    i.src = src; i.alt = ''; i.loading = 'lazy';
+    i.setAttribute('draggable','false');
+    d.appendChild(i);
   }
-  const shade = document.createElement('div');
-  shade.className = 'page-shade';
-  d.appendChild(shade);
+  d.appendChild(mk('div','shade'));
   return d;
 }
 
-// ── ANGLE TRACKING ───────────────────────────────────────────
-const ANG = new WeakMap();
-const getA = el => ANG.get(el) ?? 0;
-
-function setPageAngle(el, a) {
-  a = Math.max(0, Math.min(180, a));
-  el.style.transform = `rotateY(${-a}deg)`;
-  ANG.set(el, a);
-  // Shading
-  const sh = Math.sin((a / 180) * Math.PI) * 0.5;
-  const f  = el.querySelector('.face.front .page-shade');
-  const b  = el.querySelector('.face.back  .page-shade');
-  if (f) f.style.opacity = a < 90  ? sh : 0;
-  if (b) b.style.opacity = a >= 90 ? sh : 0;
+function mk(tag, cls) {
+  const el = document.createElement(tag);
+  if (cls) el.className = cls;
+  return el;
 }
 
-// ── DRAG ─────────────────────────────────────────────────────
-function attachDrag(target, els, getAngles, onMove) {
-  let down=false, startX=0, startAngles=[], pid=null, dp=null;
+// ── ANGLE ────────────────────────────────────────────────────
+function setAngle(el, a, animate) {
+  if (animate) {
+    el.classList.add('animating');
+    el.addEventListener('transitionend', () => el.classList.remove('animating'), {once:true});
+  }
+  el.style.transform = `rotateY(${-a}deg)`;
+  // Shading
+  const sh = Math.sin((Math.min(a,180)/180)*Math.PI) * 0.55;
+  const fs = el.querySelector('.face.front .shade');
+  const bs = el.querySelector('.face.back  .shade');
+  if (fs) fs.style.opacity = a < 90 ? sh : 0;
+  if (bs) bs.style.opacity = a >= 90 ? sh : 0;
+}
+
+// ── DRAG — FULL LEAF ─────────────────────────────────────────
+function attachLeafDrag(leaf, target) {
+  let dn=false, sx=0, sa=0, pid=null, dp=null;
 
   target.addEventListener('pointerdown', e => {
-    // Only respond to left button / touch
-    if (e.button && e.button !== 0) return;
-    e.stopPropagation();
-    e.preventDefault(); // stops browser image-drag
-    down=true; pid=e.pointerId;
+    if (e.button > 0) return;
+    e.preventDefault(); e.stopPropagation();
+    dn=true; pid=e.pointerId;
     target.setPointerCapture(pid);
-    startX=e.clientX;
-    startAngles = getAngles();
-    dp={x:e.clientX, y:e.clientY, t:Date.now()};
-    els.forEach(el => el.classList.add('lifted','dragging'));
+    sx=e.clientX; sa=leaf.angle;
+    dp={x:e.clientX,y:e.clientY,t:Date.now()};
+    target.classList.add('dragging');
   });
 
   target.addEventListener('pointermove', e => {
-    if (!down) return;
-    e.stopPropagation(); e.preventDefault();
-    const bw  = book.getBoundingClientRect().width / 2; // half-width = one page
-    const dx  = e.clientX - startX;
-    const delta = (dx / bw) * 180;
-    const newAngles = startAngles.map(sa => Math.max(0, Math.min(180, sa - delta)));
-    newAngles.forEach((a, i) => setPageAngle(els[i], a));
-    onMove(newAngles);
+    if (!dn) return;
+    e.preventDefault(); e.stopPropagation();
+    const pw = book.getBoundingClientRect().width / 2;
+    const a  = clamp(sa - ((e.clientX - sx) / pw) * 180);
+    leaf.angle = a;
+    setAngle(target, a, false);
+    refresh();
   });
 
-  const end = e => {
-    if (!down) return; down=false;
-    els.forEach(el => el.classList.remove('lifted','dragging'));
-    try { target.releasePointerCapture(pid); } catch(_) {}
+  target.addEventListener('pointerup',     e => endDrag(e, leaf, target, sa));
+  target.addEventListener('pointercancel', e => endDrag(e, leaf, target, sa));
 
+  function endDrag(e, leaf, target, origA) {
+    if (!dn) return; dn=false;
+    target.classList.remove('dragging');
+    try { target.releasePointerCapture(pid); } catch(_){}
     const moved = dp ? Math.hypot(e.clientX-dp.x, e.clientY-dp.y) : 99;
     const tap   = moved < 8 && (Date.now()-dp.t) < 350;
-    const cur   = getA(els[0]);
-    const target_angle = tap ? (cur < 90 ? 180 : 0) : (cur >= 90 ? 180 : 0);
-
-    els.forEach(el => {
-      el.classList.remove('dragging');
-      setPageAngle(el, target_angle);
-      // Apply animated transition
-      el.style.transition = 'transform 0.75s cubic-bezier(0.35,0.05,0.2,1)';
-      el.style.transform  = `rotateY(${-target_angle}deg)`;
-      setTimeout(()=>el.style.transition='',800);
-    });
-
-    onMove(els.map(()=>target_angle));
-    dp=null;
-  };
-  target.addEventListener('pointerup',     end);
-  target.addEventListener('pointercancel', end);
+    const snap  = tap ? (leaf.angle < 90 ? 180 : 0) : (leaf.angle >= 90 ? 180 : 0);
+    leaf.angle  = snap;
+    setAngle(target, snap, true);
+    dp = null;
+    refresh();
+  }
 }
 
-// ── DRAG SETUP PER GROUP ──────────────────────────────────────
-// Re-attach drag after building, now we have the groups array
-groups.forEach(g => {
-  if (g.type === 'full') {
-    const el = g.els[0];
-    // Remove old listeners by re-creating the drag
-    attachGroupDrag(g);
-  } else {
-    g.els.forEach((stripEl, si) => {
-      attachStripDrag(g, si);
-    });
-  }
-});
+// ── DRAG — STRIP ─────────────────────────────────────────────
+function attachStripDrag(leaf, strip, si) {
+  const target = strip.el;
+  let dn=false, sx=0, sa=0, pid=null, dp=null;
 
-function attachGroupDrag(g) {
-  const el = g.els[0];
-  let down=false, startX=0, startA=0, pid=null, dp=null;
-
-  el.addEventListener('pointerdown', e => {
-    if (e.button && e.button !== 0) return;
-    e.stopPropagation(); e.preventDefault();
-    down=true; pid=e.pointerId; el.setPointerCapture(pid);
-    startX=e.clientX; startA=getA(el);
+  target.addEventListener('pointerdown', e => {
+    if (e.button > 0) return;
+    e.preventDefault(); e.stopPropagation();
+    dn=true; pid=e.pointerId;
+    target.setPointerCapture(pid);
+    sx=e.clientX; sa=strip.angle;
     dp={x:e.clientX,y:e.clientY,t:Date.now()};
-    el.classList.add('lifted','dragging');
+    target.classList.add('dragging');
   });
-  el.addEventListener('pointermove', e => {
-    if (!down) return;
-    e.stopPropagation(); e.preventDefault();
-    const bw = book.getBoundingClientRect().width / 2;
-    const a  = Math.max(0,Math.min(180, startA - ((e.clientX-startX)/bw)*180));
-    setPageAngle(el, a);
-    if (a > 90) { g.flipped=true; } else { g.flipped=false; }
-    updateLeftDisplay();
-    updateZIndices();
-    updateCutLines();
-    updateCounter();
+
+  target.addEventListener('pointermove', e => {
+    if (!dn) return;
+    e.preventDefault(); e.stopPropagation();
+    const pw = book.getBoundingClientRect().width / 2;
+    const a  = clamp(sa - ((e.clientX - sx) / pw) * 180);
+    strip.angle = a;
+    leaf.splitAngles[si] = a;
+    setAngle(target, a, false);
+    refresh();
   });
-  const end = e => {
-    if (!down) return; down=false;
-    el.classList.remove('lifted','dragging');
-    try{el.releasePointerCapture(pid);}catch(_){}
-    const moved = dp?Math.hypot(e.clientX-dp.x,e.clientY-dp.y):99;
-    const tap   = moved<8&&(Date.now()-dp.t)<350;
-    const cur   = getA(el);
-    const target = tap?(cur<90?180:0):(cur>=90?180:0);
-    setPageAngle(el, target);
-    // smooth snap
-    requestAnimationFrame(()=>{
-      el.style.transition='transform 0.75s cubic-bezier(0.35,0.05,0.2,1)';
-      el.style.transform=`rotateY(${-target}deg)`;
-      setTimeout(()=>el.style.transition='',800);
-    });
-    g.flipped = target >= 90;
-    dp=null;
-    updateLeftDisplay();
-    updateZIndices();
-    updateCutLines();
-    updateCounter();
-  };
-  el.addEventListener('pointerup',end);
-  el.addEventListener('pointercancel',end);
-}
 
-function attachStripDrag(g, si) {
-  const el = g.els[si];
-  let down=false, startX=0, startA=0, pid=null, dp=null;
+  target.addEventListener('pointerup',     e => endDrag(e));
+  target.addEventListener('pointercancel', e => endDrag(e));
 
-  el.addEventListener('pointerdown', e => {
-    if (e.button && e.button !== 0) return;
-    e.stopPropagation(); e.preventDefault();
-    down=true; pid=e.pointerId; el.setPointerCapture(pid);
-    startX=e.clientX; startA=getA(el);
-    dp={x:e.clientX,y:e.clientY,t:Date.now()};
-    el.classList.add('lifted','dragging');
-  });
-  el.addEventListener('pointermove', e => {
-    if (!down) return;
-    e.stopPropagation(); e.preventDefault();
-    const bw = book.getBoundingClientRect().width / 2;
-    const a  = Math.max(0,Math.min(180, startA-((e.clientX-startX)/bw)*180));
-    setPageAngle(el, a);
-    g.stripAngles[si] = a;
-    // Group is "flipped" if ALL strips are flipped
-    g.flipped = g.stripAngles.every(a=>a>=90);
-    updateLeftDisplay();
-    updateZIndices();
-    updateCutLines();
-    updateCounter();
-  });
-  const end = e => {
-    if (!down) return; down=false;
-    el.classList.remove('lifted','dragging');
-    try{el.releasePointerCapture(pid);}catch(_){}
-    const moved = dp?Math.hypot(e.clientX-dp.x,e.clientY-dp.y):99;
-    const tap   = moved<8&&(Date.now()-dp.t)<350;
-    const cur   = getA(el);
-    const target = tap?(cur<90?180:0):(cur>=90?180:0);
-    setPageAngle(el, target);
-    requestAnimationFrame(()=>{
-      el.style.transition='transform 0.75s cubic-bezier(0.35,0.05,0.2,1)';
-      el.style.transform=`rotateY(${-target}deg)`;
-      setTimeout(()=>el.style.transition='',800);
-    });
-    g.stripAngles[si] = target;
-    g.flipped = g.stripAngles.every(a=>a>=90);
-    dp=null;
-    updateLeftDisplay();
-    updateZIndices();
-    updateCutLines();
-    updateCounter();
-  };
-  el.addEventListener('pointerup',end);
-  el.addEventListener('pointercancel',end);
-}
-
-// ── LEFT DISPLAY ─────────────────────────────────────────────
-// Shows the back of the most recently flipped page on the left side.
-function updateLeftDisplay() {
-  // Find the last flipped group
-  let lastFlipped = null;
-  for (let i = groups.length-1; i >= 0; i--) {
-    if (groups[i].flipped) { lastFlipped = groups[i]; break; }
-  }
-
-  leftDisplay.innerHTML = '';
-  leftDisplay.className = 'left-display';
-
-  if (!lastFlipped) {
-  leftDisplay.style.visibility = 'hidden';
-  return;
-}
-
-leftDisplay.style.visibility = 'visible';
-
-  if (lastFlipped.type === 'full') {
-    // Show this page's image mirrored on left (it's the back/verso)
-    // For a physical book, the back of page N shows page N+1's content
-    // Here we just show the same page image (since it's single-sided artwork)
-    const img = document.createElement('img');
-    const nextPage = Math.min(lastFlipped.num + 1, N);
-    img.src = imgPath(nextPage, null);
-    img.alt = '';
-    img.setAttribute('draggable','false');
-    leftDisplay.appendChild(img);
-  } else {
-    // Split page — show three strips on left
-    leftDisplay.className = 'left-display split-left';
-    const LCLASSES = ['ls-top','ls-mid','ls-bot'];
-    const PARTS    = ['top','mid','bot'];
-    PARTS.forEach((part, si) => {
-      // Only show strip if that strip is flipped
-      const stripAngle = lastFlipped.stripAngles[si];
-      const div = document.createElement('div');
-      div.className = `left-strip ${LCLASSES[si]}`;
-      if (stripAngle >= 90) {
-        const img = document.createElement('img');
-        img.src = imgPath(lastFlipped.num, part);
-        img.alt = '';
-        img.setAttribute('draggable','false');
-        div.appendChild(img);
-      }
-      leftDisplay.appendChild(div);
-    });
+  function endDrag(e) {
+    if (!dn) return; dn=false;
+    target.classList.remove('dragging');
+    try { target.releasePointerCapture(pid); } catch(_){}
+    const moved = dp ? Math.hypot(e.clientX-dp.x, e.clientY-dp.y) : 99;
+    const tap   = moved < 8 && (Date.now()-dp.t) < 350;
+    const snap  = tap ? (strip.angle < 90 ? 180 : 0) : (strip.angle >= 90 ? 180 : 0);
+    strip.angle = snap;
+    leaf.splitAngles[si] = snap;
+    setAngle(target, snap, true);
+    dp = null;
+    refresh();
   }
 }
 
-// ── CUT LINES ────────────────────────────────────────────────
-function updateCutLines() {
-  // Show cut lines only on the current top unflipped page if it's a split page
-  const topUnflipped = groups.find(g => !g.flipped);
-  const show = topUnflipped && topUnflipped.type === 'split';
-  cutMid.style.display = show ? 'block' : 'none';
-  cutBot.style.display = show ? 'block' : 'none';
-}
+function clamp(a){ return Math.max(0, Math.min(180, a)); }
 
-// ── PAGE COUNTER ─────────────────────────────────────────────
-function updateCounter() {
-  const idx = groups.findIndex(g => !g.flipped);
-  const cur = idx === -1 ? N : idx + 1;
-  document.getElementById('pageCounter').textContent = `p ${cur} / ${N}`;
+// ── REFRESH — z-index + cut lines + counter ───────────────────
+function refresh() {
+  const NL = leaves.length;
+
+  leaves.forEach((leaf, li) => {
+    const fullyFlipped = leaf.split
+      ? leaf.splitAngles.every(a => a >= 90)
+      : leaf.angle >= 90;
+
+    // Unflipped leaves: stack so leaf 0 is on top (highest z)
+    // Flipped leaves:   stack so last-flipped is on top of left pile
+    const z = fullyFlipped ? (li + 1) : (NL * 10 - li * 10);
+
+    if (leaf.split) {
+      leaf.strips.forEach(s => s.el.style.zIndex = z);
+      // Cut lines follow same z as their leaf, slightly above
+      if (leaf.cutMid) leaf.cutMid.style.zIndex = z + 1;
+      if (leaf.cutBot) leaf.cutBot.style.zIndex = z + 1;
+      // Show cuts only when this leaf is on top of unflipped stack
+      const onTop = !fullyFlipped && leaves.slice(0,li).every(l =>
+        l.split ? l.splitAngles.every(a=>a>=90) : l.angle>=90
+      );
+      if (leaf.cutMid) leaf.cutMid.style.display = onTop ? 'block' : 'none';
+      if (leaf.cutBot) leaf.cutBot.style.display = onTop ? 'block' : 'none';
+    } else {
+      leaf.el.style.zIndex = z;
+    }
+  });
+
+  // Show bg-left and spine only once any leaf has been flipped
+  const anyFlipped = leaves.some(l =>
+    l.split ? l.splitAngles.some(a => a > 0) : l.angle > 0
+  );
+  book.classList.toggle('has-flipped', anyFlipped);
+
+  // Page counter — which leaf is currently on top of unflipped stack
+  let topLeaf = 0;
+  for (let i=0; i<leaves.length; i++) {
+    const lf = leaves[i];
+    const flipped = lf.split ? lf.splitAngles.every(a=>a>=90) : lf.angle>=90;
+    if (!flipped) { topLeaf = i; break; }
+    topLeaf = i + 1;
+  }
+  const pgNum = Math.min(topLeaf * 2 + 1, 17);
+  document.getElementById('pgc').textContent = `p ${pgNum} / 17`;
 }
 
 // ── NAV BUTTONS ──────────────────────────────────────────────
-document.getElementById('btnNext').addEventListener('click', () => {
-  const g = groups.find(g => !g.flipped);
-  if (!g) return;
-  flipGroupTo(g, 180);
-});
+function flipLeafTo(leaf, angle) {
+  if (leaf.split) {
+    leaf.strips.forEach((s, si) => {
+      s.angle = angle;
+      leaf.splitAngles[si] = angle;
+      setAngle(s.el, angle, true);
+    });
+  } else {
+    leaf.angle = angle;
+    setAngle(leaf.el, angle, true);
+  }
+  refresh();
+}
 
-document.getElementById('btnPrev').addEventListener('click', () => {
-  // Find last flipped
-  for (let i=groups.length-1; i>=0; i--) {
-    if (groups[i].flipped) { flipGroupTo(groups[i], 0); return; }
+document.getElementById('bNext').addEventListener('click', () => {
+  // Find first unflipped leaf
+  for (const leaf of leaves) {
+    const flipped = leaf.split ? leaf.splitAngles.every(a=>a>=90) : leaf.angle>=90;
+    if (!flipped) { flipLeafTo(leaf, 180); return; }
   }
 });
 
-function flipGroupTo(g, angle) {
-  g.els.forEach(el => {
-    el.style.transition = 'transform 0.75s cubic-bezier(0.35,0.05,0.2,1)';
-    el.style.transform  = `rotateY(${-angle}deg)`;
-    ANG.set(el, angle);
-    const f = el.querySelector('.face.front .page-shade');
-    const b = el.querySelector('.face.back  .page-shade');
-    if(f) f.style.opacity=0; if(b) b.style.opacity=0;
-    setTimeout(()=>el.style.transition='',800);
-  });
-  if (g.type==='split') g.stripAngles=[angle,angle,angle];
-  g.flipped = angle >= 90;
-  updateLeftDisplay();
-  updateZIndices();
-  updateCutLines();
-  updateCounter();
-}
+document.getElementById('bPrev').addEventListener('click', () => {
+  // Find last flipped leaf
+  for (let i=leaves.length-1; i>=0; i--) {
+    const leaf = leaves[i];
+    const flipped = leaf.split ? leaf.splitAngles.every(a=>a>=90) : leaf.angle>=90;
+    if (flipped) { flipLeafTo(leaf, 0); return; }
+  }
+});
 
-document.getElementById('btnReset').addEventListener('click', () => {
-  groups.forEach(g => flipGroupTo(g, 0));
+document.getElementById('bReset').addEventListener('click', () => {
+  leaves.forEach(leaf => flipLeafTo(leaf, 0));
   scale=1; tx=0; ty=0; applyX(false);
 });
 
-// ── INIT ─────────────────────────────────────────────────────
-updateZIndices();
-updateLeftDisplay();
-updateCutLines();
-updateCounter();
+// Init
+refresh();
 
 // ── ZOOM & PAN ───────────────────────────────────────────────
-const stage    = document.getElementById('stage');
-const zoomWrap = document.getElementById('zoomWrap');
-const zLabel   = document.getElementById('zoomLabel');
+const stage = document.getElementById('stage');
+const zw    = document.getElementById('zw');
+const zLbl  = document.getElementById('zLbl');
 let scale=1, tx=0, ty=0;
 const MN=0.35, MX=5;
 
-function applyX(inst) {
-  if (inst) zoomWrap.classList.add('instant');
-  else      zoomWrap.classList.remove('instant');
-  zoomWrap.style.transform = `translate(${tx}px,${ty}px) scale(${scale})`;
-  zLabel.textContent = Math.round(scale*100)+'%';
+function applyX(instant) {
+  if (instant) zw.classList.add('instant'); else zw.classList.remove('instant');
+  zw.style.transform = `translate(${tx}px,${ty}px) scale(${scale})`;
+  zLbl.textContent = Math.round(scale*100)+'%';
 }
 applyX(true);
 
@@ -791,12 +643,12 @@ stage.addEventListener('wheel', e => {
   applyX(true);
 },{passive:false});
 
-document.getElementById('btnZoomIn').addEventListener('click',()=>{scale=Math.min(MX,scale*1.3);applyX(false);});
-document.getElementById('btnZoomOut').addEventListener('click',()=>{scale=Math.max(MN,scale/1.3);applyX(false);});
+document.getElementById('bZIn').addEventListener('click',()=>{scale=Math.min(MX,scale*1.3);applyX(false);});
+document.getElementById('bZOut').addEventListener('click',()=>{scale=Math.max(MN,scale/1.3);applyX(false);});
 
 let panning=false, panRef=null;
 stage.addEventListener('pointerdown', e => {
-  if (e.target.closest('.page,.strip')) return;
+  if (e.target.closest('.leaf,.strip')) return;
   panning=true; panRef={x:e.clientX-tx,y:e.clientY-ty};
   stage.setPointerCapture(e.pointerId); stage.style.cursor='grabbing';
 });
@@ -804,8 +656,13 @@ stage.addEventListener('pointermove', e => {
   if (!panning) return;
   tx=e.clientX-panRef.x; ty=e.clientY-panRef.y; applyX(true);
 });
-const endPan=e=>{if(!panning)return;panning=false;try{stage.releasePointerCapture(e.pointerId);}catch(_){}stage.style.cursor='';};
-stage.addEventListener('pointerup',endPan);stage.addEventListener('pointercancel',endPan);
+const epan = e => {
+  if (!panning) return; panning=false;
+  try{stage.releasePointerCapture(e.pointerId);}catch(_){}
+  stage.style.cursor='';
+};
+stage.addEventListener('pointerup',epan);
+stage.addEventListener('pointercancel',epan);
 
 // Pinch zoom
 const tc=new Map(); let pd0=0,ps0=1;
@@ -821,24 +678,26 @@ stage.addEventListener('pointermove',e=>{
     else{scale=Math.max(MN,Math.min(MX,ps0*d/pd0));applyX(true);}
   }
 });
-['pointerup','pointercancel'].forEach(ev=>stage.addEventListener(ev,e=>{tc.delete(e.pointerId);if(tc.size<2)pd0=0;}));
+['pointerup','pointercancel'].forEach(ev=>
+  stage.addEventListener(ev,e=>{tc.delete(e.pointerId);if(tc.size<2)pd0=0;})
+);
 
-// Fit to screen
-function fit() {
+// Fit book to viewport
+function fit(){
   const mw=window.innerWidth-60, mh=window.innerHeight-120;
-  // book is 2:1 wide — aspect = book-w/book-h = 2*(432/684) = 1.263
-  const aspect = 2 * (432/684);
-  let w=Math.min(760,mw), h=w/aspect;
+  const aspect=2*(432/684); // book is 2 pages wide
+  let w=Math.min(720,mw), h=w/aspect;
   if(h>mh){h=mh;w=h*aspect;}
-  const pw=w/2, ph=h;
-  document.documentElement.style.setProperty('--page-w', pw+'px');
-  document.documentElement.style.setProperty('--page-h', ph+'px');
-  document.documentElement.style.setProperty('--book-w', w+'px');
-  document.documentElement.style.setProperty('--book-h', h+'px');
+  document.documentElement.style.setProperty('--page-w',(w/2)+'px');
+  document.documentElement.style.setProperty('--page-h',h+'px');
+  document.documentElement.style.setProperty('--book-w',w+'px');
+  document.documentElement.style.setProperty('--book-h',h+'px');
 }
 fit();
 window.addEventListener('resize',fit);
-document.addEventListener('touchmove',e=>{if(e.touches.length>1)e.preventDefault();},{passive:false});
+document.addEventListener('touchmove',e=>{
+  if(e.touches.length>1)e.preventDefault();
+},{passive:false});
 </script>
 </body>
 </html>
